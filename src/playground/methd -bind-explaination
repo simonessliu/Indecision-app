@@ -1,0 +1,156 @@
+首先我们看两个例子
+
+let obj = {
+    tmp:'Yes!',
+    testLog:function(){
+        console.log(this.tmp);
+    }
+};
+obj.testLog();
+
+//--------------------------------------------------
+
+let obj = {
+    tmp:'Yes!',
+    testLog:function(){
+        console.log(this.tmp);
+    }
+};
+let tmpLog = obj.testLog;
+tmpLog();
+
+上面两个例子 第一个可以正常输出tmp的属性  而第二个却不可以
+
+
+原因： 我们注意到在第二个例子中 没有直接调用obj对象中的testLog方法，
+而是使用了一个中间变量tmpLog过渡，当使用括号()调用该方法时，
+方法中的this丢失了指向，会指向window，进而window.tmp未定义就是undefined
+
+
+//我们可以这样想 当tmpLog 赋值为 obj.testLog; 时 再运行tmpLog()
+
+就变成了单独运行这行代码，上没有class 哥哥，下没有其他 method 弟弟
+就生他妈一行代码杵在这，你说这个this能指谁，没谁可以让他this 指代的，于是乎
+只能指向windows：
+    
+        console.log(this.tmp);
+
+
+
+
+    
+
+//好，清楚了上面这些我们接着向下看
+
+    我们经常在event 时间中 用到一些onClick 这样的时间 比如
+        <button onClick = {activelasers}>
+            activelasers
+        </button>
+
+在这里 的onClick 就相当于上面 tmpLog 一样的 中间变量
+
+如果activelasers () 是一个method 里面有特么个 this。。 比如
+
+    activelasers() {
+        console.log(this.name);
+    }
+
+一旦点了这个button 就相当于 执行了 ： onClick(); 这行代码，然后这个this
+就又成孤零零的 上不鸟有咩有class 下有没有其他方法 生特么一个this杵这。。
+所以肯定会成为undefined
+
+
+
+
+
+
+
+
+//好，看清楚了这些我们接着看我们自己的例子、
+
+在build-it-visible 练习中 有类似这样的代码：
+
+ handleToggleVisibility(){
+
+    this.setState((preState) =>{
+         return {
+            visibility : !preState.visibility
+        };
+    });
+
+}
+
+
+ <h1>Visibility Toggle</h1>
+ <button onClick = {this.handleToggleVisibility}>
+        {this.state.visibility ? 'Hide details' : 'Show details'}             
+ </button>
+
+在这里 我们的onClick就是一个中间变量 我们把它赋值为了 handleToggleVisibility()
+这个方法 就像是
+
+    let onClick = this.handleToggleVisibility;
+
+在上述例子中 我们用的是 
+
+    let tmp =  obj.testLog
+
+而我们用的是this.handleToggleVisibility 而不是什么obj.handleToggleVisibility
+
+
+是因为：
+
+let obj = {
+    tmp:'Yes!',
+    testLog:function(){
+        console.log(this.tmp);
+    }
+};
+let tmpLog = obj.testLog;
+
+人家他妈例子里的function 是在 obj 这个对象里，所以用obj.testLog
+我们这个 handleToggleVisibility 是在我们这个 class VisibilityToggle 的实例
+对象里  所以：
+
+    我们这里的this.handleToggleVisibility 的this 指的就是我们这个class的实例对象
+    人家那个obj 也是一个对象 （因为是大括号在那阔着呢）
+
+    所以这边我们的this.handleToggleVisibility 的this 指的就是我们这个
+    VisibilityToggle 这个 class   ---的实例对象 
+    （实例对象：VisibilityToggle ABC = new VisibilityToggle() ABC 就是我们的一个
+    instance 即实例对象)
+
+所以我们--为了让这个this 在经过转换变量的时候 有个着落 不至于没处指 直接指他妈的
+windows去-- 我们需要在实例化对象的时候，在构造函数中绑定this，使得无论事件处理
+函数如何传递，它的this的指向都是固定的，固定指向我们所实例化的对象，即
+VisibilityToggle 这个class 的实例对象。
+
+（我们一Click 那个 button 就是实例化对象
+的一个过程，因为我们每次点 button 就会执行onClick（））
+
+所以 我们可以这样
+    <button onClick = {this.handleToggleVisibility.bind(this)}>
+    直接在button的 onClick 事件中 添加这个bind
+
+或者一劳永逸 直接在constructor 里面 加个说明一劳永逸：
+     constructor(props) {
+        super(props);
+        this.handleToggleVisibility = this.handleToggleVisibility.bind(this);
+        .
+        .
+        .
+        .
+在之后的event中就可以直接拿 this.handleToggleVisibility 来用了 不用每次都
+bind 一遍。
+
+another example
+const obj = {
+    name:'Vikran',
+    getName() {
+        return this.name;
+    }
+};
+
+const getName = obj.getName.bind(obj);
+
+console.log(getName());
